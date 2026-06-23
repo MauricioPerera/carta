@@ -95,6 +95,7 @@ pytest    # 34 passing
 
 | Path             | Role                                                            |
 | ---------------- | -------------------------------------------------------------- |
+| `carta/`         | Reusable client: `CartaClient` (select + execute) and `CartaAgent` (full loop). |
 | `okf/`           | Capability catalogs (markdown + YAML). Two providers included. |
 | `agents/tool_selector.py` | Task text → minimal relevant docs.                    |
 | `bash/`          | Sandboxed executor — a Python port of [just-bash](https://github.com/vercel-labs/just-bash), with allowlist + audit. |
@@ -113,6 +114,24 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design.
 
 The n8n example shows a small local model building a real workflow from trimmed
 context (~1.5k tokens vs ~7.9k), validated and created with no manual JSON import.
+
+## Using Carta as a client
+
+Adopting Carta as an agent builder is a library import, not a server to run:
+
+```python
+from carta import CartaAgent
+
+agent = CartaAgent(["okf/n8n"], model="qwen2.5-7b",
+                   base_url="http://localhost:1234/v1")
+result = agent.run("Create a workflow that emails me when a webhook arrives")
+```
+
+`CartaAgent` selects the minimal context per task, drives an OpenAI-compatible
+model with a block protocol (one action per turn; fenced blocks for long code,
+never code inside JSON), and executes `rest` actions through the sandboxed
+executor. `mcp` actions are handed to an optional `mcp_executor` bridge. For the
+lower-level pieces use `CartaClient`. See [carta/README.md](carta/README.md).
 
 ## Where MCP is still the right tool
 
