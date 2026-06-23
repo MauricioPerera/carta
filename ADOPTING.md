@@ -81,6 +81,31 @@ git clone https://github.com/example/carta-catalog okf/example
 
 Discovery is now local and offline.
 
+#### Fetching only what you need (low-latency edge / CI)
+
+A full clone is wasteful if you only use one provider or run on the edge. Git's
+**partial clone** + **sparse-checkout** download the tree but hydrate file
+contents (blobs) on demand, and only for the paths you ask for:
+
+```bash
+# blobs fetched on read; only the 'stripe' provider is materialized
+git clone --depth=1 --filter=blob:none --sparse https://github.com/example/carta-catalog
+cd carta-catalog
+git sparse-checkout set okf/stripe
+```
+
+- `--filter=blob:none` — clone commits and trees, not blobs (hydrate on first read).
+- `--sparse` + `sparse-checkout set <path>` — materialize only those directories.
+- `--depth=1` — current state only, no history.
+
+Latency is **moved, not removed**: a blobless clone does a round-trip the first
+time each blob is read, so the win comes from reading a *subset* (sparse), not the
+whole catalog. Note `compute_dir_sha` over a whole directory forces every blob to
+hydrate — for selective discovery, hash only the docs you select.
+
+If you just want the current state with no git protocol at all, a release tarball
+of the catalog (one GET) is the fastest option.
+
 ### 2. Use the client
 
 The whole loop is packaged. Minimal case:
