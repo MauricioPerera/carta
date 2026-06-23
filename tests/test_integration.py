@@ -59,6 +59,11 @@ def _setup_temp_repo() -> str:
         dst = os.path.join(tmp, name)
         shutil.copytree(src, dst, ignore=_IGNORE)
     _git("init", cwd=tmp)
+    # Self-contained identity so the test does not depend on the host's global
+    # git config (e.g. CI runners have none).
+    _git("config", "user.email", "test@carta.local", cwd=tmp)
+    _git("config", "user.name", "Carta Test", cwd=tmp)
+    _git("config", "commit.gpgsign", "false", cwd=tmp)
     _git("add", ".", cwd=tmp)
     _git("commit", "-m", "baseline", cwd=tmp)
     return tmp
