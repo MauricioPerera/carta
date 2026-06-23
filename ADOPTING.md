@@ -107,7 +107,7 @@ If a catalog has `route: mcp` tools, install the optional dependency and pass a
 bridge:
 
 ```bash
-pip install -r requirements-mcp.txt
+pip install -e ".[mcp]"     # or: pip install -r requirements-mcp.txt
 ```
 ```python
 from carta import CartaAgent, stdio_mcp_executor

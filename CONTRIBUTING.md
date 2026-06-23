@@ -9,8 +9,8 @@ honest critique of the model.
 ```bash
 git clone https://github.com/MauricioPerera/carta
 cd carta
-pip install -r requirements.txt
-pytest                 # all tests must pass before and after your change
+pip install -e ".[mcp,audit]"   # editable install with all extras
+pytest                          # all tests must pass before and after your change
 ```
 
 Requirements: Python 3.10+ and `bash` on PATH (the executor shells out to
@@ -26,7 +26,7 @@ A provider catalog is just a directory of OKF documents — no code required.
    `when_to_use`, `tags`.
 3. Group related tools into `okf/<provider>/skills/<skill>.md` with a
    `tools_needed` list and an ordered sequence.
-4. Verify selection works: `python agents/tool_selector.py "<task>" --provider <provider>`.
+4. Verify selection works: `python -m carta.selector "<task>" --provider <provider>`.
 
 ## Code changes
 

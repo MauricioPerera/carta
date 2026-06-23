@@ -18,19 +18,23 @@ checkout; only the final execution call touches the network.
 ## Components
 
 ```
-carta/
-├── okf/            # Discovery: capabilities as markdown + YAML frontmatter
-│   ├── n8n/        #   provider with an MCP server (route: mcp | rest)
-│   └── jsonplaceholder/  # provider with REST only, no server (route: rest)
-├── agents/
-│   └── tool_selector.py  # Selection: task text -> minimal relevant docs
-├── bash/           # Execution: sandboxed shell (Python port of just-bash)
-│   ├── executor.py #   Bash.exec() with allowlist + audit hooks
-│   ├── allowlist.py#   reads CCDD execution policy
-│   ├── sandbox.py  #   timeout + output caps
-│   └── audit.py    #   append-only execution log
-├── postal/         # Audit/transport: ECDSA-signed, ECDH-encrypted messages
-└── .ccdd/          # Governance: per-agent contracts (permissions, budgets)
+carta/                       # Installable package
+├── selector.py        # Selection: task text -> minimal relevant docs
+├── client.py          # CartaClient: select + route + execute
+├── agent.py           # CartaAgent: full loop against an OpenAI-compatible model
+├── openapi_to_okf.py  # Generate a catalog from an OpenAPI spec
+├── mcp_executor.py    # Bridge for route: mcp (optional `mcp` dependency)
+└── bash/              # Execution: sandboxed shell (Python port of just-bash)
+    ├── executor.py    #   Bash.exec() with allowlist + audit hooks
+    ├── allowlist.py   #   reads CCDD execution policy
+    ├── sandbox.py     #   timeout + output caps
+    └── audit.py       #   append-only execution log
+
+okf/                # Discovery: capabilities as markdown + YAML frontmatter
+├── n8n/            #   provider with an MCP server (route: mcp | rest)
+└── jsonplaceholder/#   provider with REST only, no server (route: rest)
+postal/             # Audit/transport: ECDSA-signed, ECDH-encrypted messages (optional)
+.ccdd/              # Governance: per-agent contracts (permissions, budgets)
 ```
 
 ## Discovery — OKF
@@ -61,11 +65,11 @@ everything `route: rest` — and never has to run a server at all.
 ## Selection — tool_selector
 
 Loading every tool definition into the prompt is what saturates small models.
-`tool_selector` scores skill and tool docs against the task text and returns
+`carta.selector` scores skill and tool docs against the task text and returns
 only the relevant subset.
 
 ```
-$ python agents/tool_selector.py "create a workflow from a webhook" --provider n8n
+$ python -m carta.selector "create a workflow from a webhook" --provider n8n
 selected 5/30 docs · 1496 tokens · 18.9% of the 7902-token baseline
 ```
 

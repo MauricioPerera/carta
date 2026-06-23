@@ -10,7 +10,7 @@ directly by :mod:`carta.selector`.
 
 CLI::
 
-    python carta/openapi_to_okf.py <spec.json|yaml> <out_dir>
+    python -m carta.openapi_to_okf <spec.json|yaml> <out_dir>
 """
 from __future__ import annotations
 
@@ -337,7 +337,7 @@ def _write_index_md(
 # ----------------------------------------------------------------------- CLI
 def main(argv: list[str]) -> int:
     if len(argv) != 3:
-        print("usage: python carta/openapi_to_okf.py <spec.json|yaml> <out_dir>")
+        print("usage: python -m carta.openapi_to_okf <spec.json|yaml> <out_dir>")
         return 2
     spec_path, out_dir = argv[1], argv[2]
     spec = load_spec(spec_path)

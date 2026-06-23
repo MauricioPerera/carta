@@ -44,8 +44,8 @@ dependencies: stdlib only.
 ## MCP route (optional)
 
 For `route='mcp'` actions, pass a reference executor built on the official
-`mcp` SDK. Requires `pip install -r requirements-mcp.txt` (the `mcp` package is
-an optional dependency; `import carta` works without it).
+`mcp` SDK. Requires `pip install -e ".[mcp]"` (the `mcp` package is an optional
+dependency; `import carta` works without it).
 
 ```python
 from carta import CartaAgent, stdio_mcp_executor
@@ -66,7 +66,7 @@ A provider can autogenerate its OKF catalog from an OpenAPI 3.0 spec instead
 of hand-writing each `.md`:
 
 ```
-python carta/openapi_to_okf.py <spec.json|yaml> <out_dir>
+python -m carta.openapi_to_okf <spec.json|yaml> <out_dir>
 ```
 
 This writes one `route: rest` tool doc per operation under `<out_dir>/tools/`

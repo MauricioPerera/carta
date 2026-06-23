@@ -12,7 +12,7 @@ only those tool calls are proxied to a running [n8n MCP server](https://github.c
 ## 1. Select context (local, no server)
 
 ```bash
-python agents/tool_selector.py "create a workflow webhook set field respond" --provider n8n
+python -m carta.selector "create a workflow webhook set field respond" --provider n8n
 ```
 ```
 Selected docs (5/30):

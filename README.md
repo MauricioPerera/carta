@@ -78,18 +78,20 @@ Requirements: Python 3.10+ and `bash` on PATH (Git Bash or WSL on Windows).
 ```bash
 git clone https://github.com/MauricioPerera/carta
 cd carta
-pip install -r requirements.txt
+pip install -e .                 # core; add ".[mcp,audit]" for the MCP route + Postal
 
 # Select context for a task (offline, no server)
-python agents/tool_selector.py "create a workflow from a webhook" --provider n8n
+python -m carta.selector "create a workflow from a webhook" --provider n8n
 #  → selected 5/30 docs · 1496 tokens · 18.9% of the 7902-token baseline
 
 # Run an agent end-to-end against a real REST API, no MCP server involved
 python agents/agent_rest.py
 #  → TASK COMPLETE - route: rest - no MCP server required
 
-pytest    # 34 passing
+pytest    # 49 passing
 ```
+
+Carta is not on PyPI yet — install from a clone with `pip install -e .`.
 
 ## What's in the box
 
@@ -97,8 +99,9 @@ pytest    # 34 passing
 | ---------------- | -------------------------------------------------------------- |
 | `carta/`         | Reusable client: `CartaClient` (select + execute) and `CartaAgent` (full loop). |
 | `okf/`           | Capability catalogs (markdown + YAML). Two providers included. |
-| `agents/tool_selector.py` | Task text → minimal relevant docs.                    |
-| `bash/`          | Sandboxed executor — a Python port of [just-bash](https://github.com/vercel-labs/just-bash), with allowlist + audit. |
+| `carta/selector.py` | Task text → minimal relevant docs.                         |
+| `carta/bash/`    | Sandboxed executor — a Python port of [just-bash](https://github.com/vercel-labs/just-bash), with allowlist + audit. |
+| `carta/openapi_to_okf.py` | Generate a catalog from an OpenAPI spec.              |
 | `postal/`        | ECDSA-signed, ECDH-encrypted messages over git.               |
 | `.ccdd/`         | Per-agent governance contracts (permissions, budgets, allowlist). |
 | `examples/`      | Worked examples, one per route (REST and MCP).                 |
