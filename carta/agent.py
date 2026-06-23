@@ -19,6 +19,7 @@ import urllib.error
 import urllib.request
 
 from .client import CartaClient
+from .selector import selection_sha
 
 # Block-protocol system prompt. Kept compact: small models obey short rules.
 _SYSTEM_TEMPLATE = """\
@@ -115,12 +116,16 @@ class CartaAgent:
         contract: str | None = None,
         mcp_executor=None,
         timeout: int = 60,
+        postal_identity=None,
+        postal_dir: str = ".postal/audit",
     ):
         self.client = CartaClient(catalogs, contract=contract)
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.mcp_executor = mcp_executor
         self.timeout = timeout
+        self.postal_identity = postal_identity
+        self.postal_dir = postal_dir
 
     # ------------------------------------------------------------------ chat
     def _chat(self, messages: list[dict]) -> str:
@@ -212,6 +217,7 @@ class CartaAgent:
         """
         sel = self.client.select(task, provider=provider)
         docs = sel["docs"]
+        sha = selection_sha(sel["docs"])
         messages: list[dict] = [
             {"role": "system", "content": self._system_prompt(sel["context"])},
             {"role": "user", "content": task},
@@ -293,4 +299,35 @@ class CartaAgent:
                     }
                 )
 
-        return {"status": status, "steps": steps, "context_tokens": sel["tokens"]}
+        if self.postal_identity is not None:
+            try:
+                import hashlib
+                import pathlib
+
+                ccdd_sha = ""
+                if self.client.contract:
+                    try:
+                        ccdd_sha = hashlib.sha256(
+                            pathlib.Path(self.client.contract).read_bytes()
+                        ).hexdigest()
+                    except Exception:
+                        ccdd_sha = ""
+                from .postal_audit import sign_run_receipt
+
+                sign_run_receipt(
+                    self.postal_identity,
+                    task,
+                    sha,
+                    ccdd_sha,
+                    status,
+                    self.postal_dir,
+                )
+            except Exception:
+                pass
+
+        return {
+            "status": status,
+            "steps": steps,
+            "context_tokens": sel["tokens"],
+            "selection_sha": sha,
+        }
