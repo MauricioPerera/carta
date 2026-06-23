@@ -1,0 +1,123 @@
+# Architecture
+
+Carta separates the three things an agent needs to use an external capability,
+and assigns each to the cheapest mechanism that can do the job:
+
+| Concern        | Question it answers                  | Mechanism in Carta            | Needs a server? |
+| -------------- | ------------------------------------ | ----------------------------- | --------------- |
+| **Discovery**  | What can I do, and how?              | OKF docs in a git repo        | No              |
+| **Selection**  | Which of those do I need *now*?      | `tool_selector` (local)       | No              |
+| **Execution**  | Do it.                               | `bash` executor (REST) or MCP | Only to run it  |
+| **Governance** | Am I allowed to?                     | CCDD contracts + allowlist    | No              |
+| **Audit**      | What context did I act on?           | Postal (signed, over git)     | No              |
+
+The insight: **MCP couples discovery and execution into one always-on server.**
+Carta decouples them. Discovery and selection happen offline against a git
+checkout; only the final execution call touches the network.
+
+## Components
+
+```
+carta/
+├── okf/            # Discovery: capabilities as markdown + YAML frontmatter
+│   ├── n8n/        #   provider with an MCP server (route: mcp | rest)
+│   └── jsonplaceholder/  # provider with REST only, no server (route: rest)
+├── agents/
+│   └── tool_selector.py  # Selection: task text -> minimal relevant docs
+├── bash/           # Execution: sandboxed shell (Python port of just-bash)
+│   ├── executor.py #   Bash.exec() with allowlist + audit hooks
+│   ├── allowlist.py#   reads CCDD execution policy
+│   ├── sandbox.py  #   timeout + output caps
+│   └── audit.py    #   append-only execution log
+├── postal/         # Audit/transport: ECDSA-signed, ECDH-encrypted messages
+└── .ccdd/          # Governance: per-agent contracts (permissions, budgets)
+```
+
+## Discovery — OKF
+
+Each capability is one markdown file with YAML frontmatter:
+
+```yaml
+---
+type: REST Tool
+title: create_post
+route: rest                                  # rest | mcp
+endpoint: POST https://api.example.com/posts
+description: Create a new post
+when_to_use: when you need to publish new content
+tags: [example, rest, write]
+---
+## Parameters
+- title: string
+## Example
+curl -X POST https://api.example.com/posts -d '{"title":"hi"}'
+```
+
+`route` tells the executor *how* to run it. A provider that has an MCP server
+marks its intelligence tools (`validate`, `search`, `suggest`) as `route: mcp`
+and leaves CRUD as `route: rest`. A provider with only a REST API marks
+everything `route: rest` — and never has to run a server at all.
+
+## Selection — tool_selector
+
+Loading every tool definition into the prompt is what saturates small models.
+`tool_selector` scores skill and tool docs against the task text and returns
+only the relevant subset.
+
+```
+$ python agents/tool_selector.py "create a workflow from a webhook" --provider n8n
+selected 5/30 docs · 1496 tokens · 18.9% of the 7902-token baseline
+```
+
+This is RAG for tool documentation, but the index is plain files in git —
+no vector DB, no embedding server, works offline.
+
+## Execution — bash (or MCP)
+
+`bash.Bash.exec()` runs a command in a sandboxed shell. It is a Python port of
+[just-bash](https://github.com/vercel-labs/just-bash): isolated env per call,
+shared filesystem across calls, timeout and output caps.
+
+- **`route: rest`** → the agent runs the `curl` from the OKF doc. No client
+  library, no protocol.
+- **`route: mcp`** → the agent calls an existing MCP server for capabilities
+  that have no REST equivalent (schema validation, node search, sampling).
+
+Both routes pass through the same allowlist and audit log.
+
+## Governance — CCDD
+
+A CCDD contract declares what an agent may do, including an execution policy the
+allowlist enforces before any command runs:
+
+```yaml
+execution:
+  allowed_commands: [curl, python, git]
+  allowed_urls: [https://api.example.com]
+  timeout: 30
+```
+
+A command outside the allowlist is refused and the refusal is recorded.
+
+## Audit — Postal
+
+Postal turns "what context did the agent act on?" into a verifiable fact. Each
+message is ECDSA-signed and carries `okf_snapshot_sha` and `ccdd_contract_sha`,
+so any party can later prove which exact version of the knowledge and contract
+an agent used. Messages live in git — the transport survives the producer going
+offline, and the history is immutable and reproducible.
+
+## Where MCP is still the right tool
+
+Carta covers discovery, selection, execution, governance and audit without a
+running server — roughly the 80% of MCP use cases that are request/response over
+stable capabilities. MCP remains the better choice for:
+
+- **Sub-second real-time** — git fetch latency is seconds, not milliseconds.
+- **Sampling** — the server asking the model for inference mid-operation requires
+  a live server by definition.
+- **Existing ecosystems** — if a maintained MCP server already exists, point your
+  OKF docs at it (`route: mcp`) instead of reimplementing it.
+
+Carta is a complement, not a replacement: it lowers the cost of exposing an API
+to agents from "build and operate a server" to "publish a git repo."

@@ -1,0 +1,23 @@
+---
+intent: Agent A publica análisis con contexto versionado
+role: Publisher
+permissions:
+  - publish_to_postal
+  - read_okf
+  - reference_ccdd_contract
+okf_reference:
+  source: 'okf://'
+  immutable: true
+token_budget:
+  system: 2000
+  context: 3000
+  total: 5000
+access_control:
+  can_send_to: ['Agent B']
+rules:
+  - 'Debe incluir OKF SHA en cada mensaje'
+  - 'Debe referenciar este contract SHA'
+execution:
+  allowed_commands: ['curl', 'python', 'git', 'echo', 'cat', 'ls']
+  allowed_urls: ['https://api.n8n.io', 'https://ardf.dev']
+  timeout: 30

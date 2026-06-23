@@ -1,0 +1,18 @@
+---
+intent: Agent B recibe y valida mensajes de A
+role: Subscriber
+permissions:
+  - receive_from_postal
+  - validate_ccdd_contract
+  - verify_okf_snapshot
+token_budget:
+  system: 2000
+  context: 3000
+  validation: 1000
+  total: 6000
+access_control:
+  can_receive_from: ['Agent A']
+rules:
+  - 'Validar Postal signature OK'
+  - 'Validar OKF SHA existe'
+  - 'Validar CCDD contract SHA coincide'
