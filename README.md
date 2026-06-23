@@ -156,6 +156,11 @@ Carta builds on three open ideas and ties them together:
 - **[Postal](https://github.com/MauricioPerera/postal)** — signed, append-only
   events over git.
 
+## Adopting
+
+Guides for both sides — publishing a catalog (API owners) and consuming one
+(agent builders) — are in [ADOPTING.md](ADOPTING.md).
+
 ## Contributing
 
 New provider catalogs are the most useful contribution and need no code — just
