@@ -100,8 +100,19 @@ pytest    # 34 passing
 | `bash/`          | Sandboxed executor — a Python port of [just-bash](https://github.com/vercel-labs/just-bash), with allowlist + audit. |
 | `postal/`        | ECDSA-signed, ECDH-encrypted messages over git.               |
 | `.ccdd/`         | Per-agent governance contracts (permissions, budgets, allowlist). |
+| `examples/`      | Worked examples, one per route (REST and MCP).                 |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design.
+
+## Examples
+
+| Example | Route | Needs a server? |
+| ------- | ----- | --------------- |
+| [JSONPlaceholder — publish a post](examples/README.md#rest--jsonplaceholder) | `rest` | No |
+| [n8n — build a workflow](examples/n8n/README.md) | `mcp` | Yes (n8n MCP) |
+
+The n8n example shows a small local model building a real workflow from trimmed
+context (~1.5k tokens vs ~7.9k), validated and created with no manual JSON import.
 
 ## Where MCP is still the right tool
 

@@ -12,3 +12,6 @@ __pycache__/
 
 # Internal build logs (CCDD task reports)
 .archive/
+
+# Local experiments (LM Studio harness, conversation state)
+experiments/
