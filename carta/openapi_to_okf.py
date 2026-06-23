@@ -160,12 +160,23 @@ def _placeholder(prop_schema: dict) -> str:
 
 
 # --------------------------------------------------------------- generation
-def generate(spec: dict, out_dir: str, timestamp: str = "2026-01-01T00:00:00Z") -> dict:
+def generate(
+    spec: dict,
+    out_dir: str,
+    timestamp: str = "2026-01-01T00:00:00Z",
+    source_spec: str = "",
+    source_spec_sha: str = "",
+) -> dict:
     """Generate an OKF catalog from an OpenAPI spec.
 
     Creates ``out_dir/tools/<toolname>.md`` per operation and
     ``out_dir/index.md``. Returns ``{'tools': [names], 'index': path,
     'out_dir': out_dir}``.
+
+    When ``source_spec`` and ``source_spec_sha`` are non-empty, they are
+    stamped into the ``index.md`` frontmatter (along with ``generated_at``
+    set to ``timestamp``) as provenance for the runtime staleness check.
+    Empty values omit those keys, preserving the legacy frontmatter shape.
     """
     base_url = _base_url(spec)
     tools_dir = os.path.join(out_dir, "tools")
@@ -191,7 +202,9 @@ def generate(spec: dict, out_dir: str, timestamp: str = "2026-01-01T00:00:00Z") 
                 "summary": _description(operation, method, path),
             })
 
-    index_path = _write_index_md(out_dir, spec, base_url, index_entries, timestamp)
+    index_path = _write_index_md(
+        out_dir, spec, base_url, index_entries, timestamp, source_spec, source_spec_sha
+    )
     return {"tools": tool_names, "index": index_path, "out_dir": out_dir}
 
 
@@ -302,12 +315,14 @@ def _write_index_md(
     base_url: str,
     entries: list[dict],
     timestamp: str,
+    source_spec: str = "",
+    source_spec_sha: str = "",
 ) -> str:
     info = spec.get("info") or {}
     title = info.get("title", "Generated API")
     description = info.get("description", "")
 
-    fm = _dump_fm([
+    fm_pairs = [
         ("type", "API Index"),
         ("title", title),
         ("description", description),
@@ -315,7 +330,15 @@ def _write_index_md(
         ("route", "rest"),
         ("tags", ["rest", "generated"]),
         ("timestamp", timestamp),
-    ])
+    ]
+    # Provenance for the runtime staleness check (carta.staleness). Only
+    # stamped when both fields are present so empty/legacy calls keep the
+    # original frontmatter shape.
+    if source_spec and source_spec_sha:
+        fm_pairs.append(("source_spec", source_spec))
+        fm_pairs.append(("source_spec_sha", source_spec_sha))
+        fm_pairs.append(("generated_at", timestamp))
+    fm = _dump_fm(fm_pairs)
 
     lines = [f"# {title}", ""]
     if description:
@@ -341,9 +364,21 @@ def main(argv: list[str]) -> int:
         return 2
     spec_path, out_dir = argv[1], argv[2]
     spec = load_spec(spec_path)
-    result = generate(spec, out_dir)
+    # SHA-256 of the raw spec bytes (binary read) so the staleness check can
+    # detect drift against the exact artifact this catalog was built from.
+    import hashlib
+
+    with open(spec_path, "rb") as f:
+        source_spec_sha = hashlib.sha256(f.read()).hexdigest()
+    result = generate(
+        spec,
+        out_dir,
+        source_spec=spec_path,
+        source_spec_sha=source_spec_sha,
+    )
     print(f"generated {len(result['tools'])} tools -> {result['out_dir']}/tools/")
     print(f"index: {result['index']}")
+    print(f"stamped provenance: source_spec={spec_path} sha={source_spec_sha}")
     return 0
 
 

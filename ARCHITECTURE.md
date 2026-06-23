@@ -117,6 +117,27 @@ hashes only the docs a task selected — letting an edge consumer version exactl
 context it used over a sparse partial clone without pulling the rest (~84% fewer
 bytes on the n8n catalog; see [benchmarks/](benchmarks/)).
 
+## Staleness — runtime drift check
+
+A checked-out OKF catalog is a snapshot. If the upstream OpenAPI spec changes
+and nobody regenerates the catalog, an agent silently runs against obsolete
+instructions — no warning. `carta.staleness.check_catalog` closes that gap: the
+generator (`carta.openapi_to_okf`) stamps `source_spec` + `source_spec_sha` +
+`generated_at` into `index.md` when it runs; the staleness check re-fetches the
+spec, hashes its bytes, and compares against the recorded SHA. `CartaClient.
+check_freshness(provider=..., fetcher=...)` resolves the catalog the same way
+`select` does and runs the check over that dir.
+
+This is **opt-in** and never runs automatically — the default offline behavior
+is unchanged. Honest limits:
+
+- It detects drift **catalog-vs-spec**, not **spec-vs-reality**. A `fresh`
+  result means the catalog matches the spec, not that the spec matches the
+  running service.
+- It requires `source_spec` to be fetchable. Catalogs without provenance
+  (hand-written ones like `okf/n8n`) return `unknown`.
+- It costs one network call per check. Inject a `fetcher` to stay offline.
+
 ## Where MCP is still the right tool
 
 Carta covers discovery, selection, execution, governance and audit without a

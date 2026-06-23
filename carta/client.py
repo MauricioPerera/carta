@@ -108,6 +108,23 @@ class CartaClient:
                 best, best_score = cat, score
         return best
 
+    # ----------------------------------------------------------- staleness
+    def check_freshness(self, task: str = "", provider: str | None = None, fetcher=None) -> dict:
+        """Check the staleness of the chosen catalog against its source spec.
+
+        Resolves the catalog the same way :meth:`select` chooses one
+        (single catalog, ``provider`` match, or token overlap with ``task``)
+        and delegates to :func:`carta.staleness.check_catalog` over that dir.
+
+        This is opt-in and never runs automatically — the default offline
+        behavior of the client is unchanged. Pass a ``fetcher`` to stay off
+        the network (see :mod:`carta.staleness`).
+        """
+        from carta.staleness import check_catalog
+
+        catalog = self._pick_catalog(task, provider)
+        return check_catalog(catalog, fetcher=fetcher)
+
     # --------------------------------------------------------------- select
     def select(self, task: str, provider: str | None = None, max_docs: int = 5) -> dict:
         """Select relevant docs for ``task`` and build the trimmed context.

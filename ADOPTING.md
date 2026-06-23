@@ -58,6 +58,14 @@ Add a CI step: when your tools change, regenerate the catalog and `git push`. Th
 catalog's content hash changes, so consumers can detect drift — the thing plain
 MCP can't give you: a *versioned* "how to use it".
 
+The generator stamps provenance when it runs: it SHA-256-hashes the raw spec
+bytes and writes `source_spec`, `source_spec_sha`, and `generated_at` into
+`index.md`. That lets a consumer run `carta.staleness.check_catalog` (or
+`CartaClient.check_freshness`) to detect catalog-vs-spec drift at runtime —
+but only catalog-vs-spec, not spec-vs-reality: a `fresh` result means the
+catalog matches the spec, not that the spec matches the running service. It
+also requires `source_spec` to be fetchable and costs one opt-in network call.
+
 ### What you gain / don't lose
 
 - Any agent (down to a small local model) can use your API without saturating its
@@ -140,6 +148,20 @@ executor, and hands `mcp` actions to an `mcp_executor`.
 
 For the lower-level pieces, use `CartaClient` (select + execute, no model) and
 write your own loop.
+
+Before you trust a catalog, check it isn't stale against its source spec:
+
+```python
+from carta import CartaClient
+
+client = CartaClient(["okf/example"])
+res = client.check_freshness(provider="example")  # status: fresh | stale | unknown | unreachable
+```
+
+This is opt-in and never runs automatically (the default stays offline). Same
+honest limits as above: it detects catalog-vs-spec drift, not spec-vs-reality,
+needs `source_spec` fetchable, and costs one network call — pass a `fetcher` to
+stay off the network entirely.
 
 ### 3. MCP-route providers (optional)
 

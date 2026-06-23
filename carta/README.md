@@ -98,3 +98,15 @@ result = generate(spec, "okf/myprovider")
 ```
 
 The output is directly consumable by `tool_selector` and `CartaClient`.
+
+The generator also stamps `source_spec` + `source_spec_sha` + `generated_at`
+into `index.md`, so a consumer can detect catalog-vs-spec drift at runtime:
+
+```python
+from carta import check_catalog          # check_catalog("okf/myprovider")
+# or via the client (resolves the catalog like select does):
+client.check_freshness(provider="myprovider")   # fresh | stale | unknown | unreachable
+```
+
+One opt-in network call; pass a `fetcher` to stay offline. It catches
+catalog-vs-spec drift, not spec-vs-reality.
