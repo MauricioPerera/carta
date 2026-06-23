@@ -1,0 +1,14 @@
+[
+  {"query": "create workflow from code", "expected": ["create-workflow", "create_workflow_from_code"]},
+  {"query": "search nodes for slack", "expected": ["find-nodes", "search_nodes"]},
+  {"query": "validate workflow", "expected": ["create-workflow", "validate_workflow"]},
+  {"query": "publish workflow to production", "expected": ["organize-projects", "publish_workflow"]},
+  {"query": "test workflow with pin data", "expected": ["run-workflow", "test_workflow"]},
+  {"query": "create a data table", "expected": ["manage-data", "create_data_table"]},
+  {"query": "set up an automation that reacts to an incoming HTTP call", "expected": ["create-workflow", "search_nodes", "validate_workflow"]},
+  {"query": "discover which building blocks exist for slack", "expected": ["find-nodes", "search_nodes"]},
+  {"query": "remove a workflow I no longer need", "expected": ["organize-projects", "archive_workflow"]},
+  {"query": "check my generated flow has no errors before saving", "expected": ["create-workflow", "validate_workflow"]},
+  {"query": "what inputs does this node accept", "expected": ["find-nodes", "get_node_types"]},
+  {"query": "stop a workflow from running in production", "expected": ["organize-projects", "unpublish_workflow"]}
+]

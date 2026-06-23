@@ -153,23 +153,35 @@ def score_doc(doc, query):
     return score
 
 
-def select_tools(query, okf_path='okf/n8n', max_docs=5):
+def select_tools(query, okf_path='okf/n8n', max_docs=5, scorer=None):
     """Select relevant docs.
 
     1. Scores skills, takes the highest-scoring skill.
     2. Reads tools_needed from that skill and loads those tool docs.
     3. Returns docs ordered by relevance (skill first, then tools).
     4. Fallback: if no skill has score>0, top-3 tools by score.
+
+    When ``scorer`` is ``None`` (default) the historical keyword scoring
+    (:func:`score_doc`) is used and nothing else in the flow changes. When
+    ``scorer`` is a callable ``rank(query, docs) -> list[float]`` it replaces
+    *only* how docs are scored — the skill->tools structure and the fallback
+    remain identical.
     """
     index = load_okf_index(okf_path)
 
-    scored_skills = [(score_doc(s, query), s) for s in index['skills']]
+    def _scored_list(docs):
+        if scorer is None:
+            return [(score_doc(d, query), d) for d in docs]
+        scores = scorer(query, docs)
+        return list(zip(scores, docs))
+
+    scored_skills = _scored_list(index['skills'])
     scored_skills = [(sc, s) for sc, s in scored_skills if sc > 0]
     scored_skills.sort(key=lambda x: x[0], reverse=True)
 
     if not scored_skills:
         # Fallback: top-3 tools by direct score
-        scored_tools = [(score_doc(t, query), t) for t in index['tools']]
+        scored_tools = _scored_list(index['tools'])
         scored_tools.sort(key=lambda x: x[0], reverse=True)
         top = scored_tools[:3]
         return [t for _sc, t in top]
@@ -185,7 +197,14 @@ def select_tools(query, okf_path='okf/n8n', max_docs=5):
             selected_tools.append(tools_by_name[tn])
 
     # Sort tools by descending score; skill stays first.
-    selected_tools.sort(key=lambda t: score_doc(t, query), reverse=True)
+    if selected_tools:
+        if scorer is None:
+            selected_tools.sort(key=lambda t: score_doc(t, query), reverse=True)
+        else:
+            tool_scores = scorer(query, selected_tools)
+            selected_tools = [t for _, t in sorted(
+                zip(tool_scores, selected_tools),
+                key=lambda x: x[0], reverse=True)]
 
     result = [best_skill] + selected_tools
     return result[:max_docs]

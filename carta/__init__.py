@@ -15,6 +15,10 @@ __all__ = [
     "format_context",
     "doc_sha",
     "selection_sha",
+    "keyword_rank",
+    "bm25_rank",
+    "make_embedding_rank",
+    "openai_embed_fn",
     "Bash",
     "Allowlist",
     "AuditLog",
@@ -55,6 +59,11 @@ def __getattr__(name):
         from . import selector
 
         return getattr(selector, name)
+    if name in ("keyword_rank", "bm25_rank", "make_embedding_rank",
+                "openai_embed_fn"):
+        from . import scorers
+
+        return getattr(scorers, name)
     if name in ("Bash", "Allowlist", "AuditLog", "SharedFilesystem"):
         from . import bash
 

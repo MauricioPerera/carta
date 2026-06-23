@@ -3,10 +3,13 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
+
+_WSL_BASH = sys.platform == "win32"
 
 from carta.bash import Allowlist, AuditLog, Bash, SharedFilesystem
 
@@ -52,6 +55,7 @@ def test_shared_filesystem(bash):
 # ---------- persistent env across calls ----------
 
 
+@pytest.mark.skipif(_WSL_BASH, reason="WSL bash does not inherit Python subprocess env vars")
 def test_shared_env(bash):
     bash.exec("export FOO=bar")
     res = bash.exec("echo $FOO")
@@ -117,6 +121,7 @@ def test_ccdd_integration():
 # ---------- define_command ----------
 
 
+@pytest.mark.skipif(_WSL_BASH, reason="WSL bash does not pass function args in bash -c scripts")
 def test_define_command(bash):
     bash.define_command("greet", "echo hello ")
     res = bash.exec("greet world")
