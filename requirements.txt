@@ -1,0 +1,6 @@
+# Runtime dependencies for Carta
+cryptography>=42.0
+PyYAML>=6.0
+
+# Test dependency
+pytest>=8.0

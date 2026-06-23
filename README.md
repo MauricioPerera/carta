@@ -78,7 +78,7 @@ Requirements: Python 3.10+ and `bash` on PATH (Git Bash or WSL on Windows).
 ```bash
 git clone https://github.com/MauricioPerera/carta
 cd carta
-pip install -r postal/requirements.txt
+pip install -r requirements.txt
 
 # Select context for a task (offline, no server)
 python agents/tool_selector.py "create a workflow from a webhook" --provider n8n

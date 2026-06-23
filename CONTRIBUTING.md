@@ -9,7 +9,7 @@ honest critique of the model.
 ```bash
 git clone https://github.com/MauricioPerera/carta
 cd carta
-pip install -r postal/requirements.txt
+pip install -r requirements.txt
 pytest                 # all tests must pass before and after your change
 ```
 
