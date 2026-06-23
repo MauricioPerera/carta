@@ -59,6 +59,18 @@ class Bash:
             self.shared_env[var] = val
 
     def exec(self, command: str, okf_sha: str | None = None, ccdd_sha: str | None = None) -> dict:
+        # 0. injection guard (global, always on — even without an allowlist)
+        ok, motivo = Allowlist.check_injection(command)
+        if not ok:
+            return {
+                "stdout": "",
+                "stderr": motivo,
+                "exit_code": 1,
+                "blocked": True,
+                "timed_out": False,
+                "audit_id": None,
+            }
+
         # 1. allowlist
         if self.allowlist is not None:
             ok, motivo = self.allowlist.check_command(command)
@@ -71,6 +83,20 @@ class Bash:
                     "timed_out": False,
                     "audit_id": None,
                 }
+
+            # 1b. URL allowlist — reject any URL not matching a permitted prefix
+            urls = re.findall(r'https?://\S+', command)
+            for url in urls:
+                ok, motivo = self.allowlist.check_url(url)
+                if not ok:
+                    return {
+                        "stdout": "",
+                        "stderr": motivo,
+                        "exit_code": 1,
+                        "blocked": True,
+                        "timed_out": False,
+                        "audit_id": None,
+                    }
 
         # 2. sandbox.run
         full_cmd = self._build_command(command)

