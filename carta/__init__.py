@@ -13,6 +13,8 @@ __all__ = [
     "select_tools",
     "load_okf_index",
     "format_context",
+    "doc_sha",
+    "selection_sha",
     "Bash",
     "Allowlist",
     "AuditLog",
@@ -43,7 +45,8 @@ def __getattr__(name):
         if name == "openapi_to_okf":
             return openapi_to_okf
         return getattr(openapi_to_okf, name)
-    if name in ("select_tools", "load_okf_index", "format_context"):
+    if name in ("select_tools", "load_okf_index", "format_context",
+                "doc_sha", "selection_sha"):
         from . import selector
 
         return getattr(selector, name)

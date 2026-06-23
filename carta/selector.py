@@ -3,6 +3,7 @@
 Given the text of a task, returns only the relevant OKF docs
 (2-5 docs, ~500-1500 tokens) to inject into an agent's prompt.
 """
+import hashlib
 import os
 import re
 import sys
@@ -50,6 +51,65 @@ def load_okf_index(okf_path='okf/n8n'):
                 'content': content,
             })
     return index
+
+
+def doc_sha(path: str) -> str:
+    """SHA-256 hex of the raw bytes of the file at ``path``.
+
+    Opens the file in binary mode and hashes its full contents.
+    """
+    with open(path, 'rb') as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def _read_file_bytes(path: str) -> bytes:
+    """Default file reader for :func:`selection_sha`: raw bytes from disk."""
+    with open(path, 'rb') as f:
+        return f.read()
+
+
+def selection_sha(docs, reader=None):
+    """Deterministic SHA-256 over ONLY the given docs.
+
+    No file outside the passed ``docs`` list is ever read.
+
+    Algorithm:
+      1. Keep docs that have a ``path`` key. Docs with no ``path`` are skipped,
+         unless they carry a ``content`` key — in that case the doc is hashed
+         using ``name`` as the basename and the UTF-8 bytes of ``content``
+         (no disk read). This keeps the function usable with in-memory docs.
+      2. Sort the kept docs by ``path`` (content-only docs sort by ``name``).
+      3. For each doc, update a sha256 hasher with:
+             basename(path).encode('utf-8') + b'\\0' + file_bytes + b'\\0'
+      4. Return the hex digest.
+
+    ``reader``, if given, is a callable ``(path) -> bytes`` used in place of
+    the default disk reader for path-bearing docs. It lets a caller (e.g. a
+    benchmark) instrument I/O without duplicating the hashing logic.
+
+    Determinism: the sort key and the per-doc stream are OS-independent; the
+    same set of docs always yields the same digest regardless of input order.
+    """
+    h = hashlib.sha256()
+
+    def _key(d):
+        return d.get('path') or d.get('name') or ''
+
+    kept = [d for d in docs if d.get('path') or d.get('content')]
+    kept.sort(key=_key)
+    for d in kept:
+        path = d.get('path')
+        if path is not None:
+            basename = os.path.basename(path)
+            data = reader(path) if reader is not None else _read_file_bytes(path)
+        else:
+            basename = d.get('name', '')
+            data = (d.get('content') or '').encode('utf-8')
+        h.update(basename.encode('utf-8'))
+        h.update(b'\0')
+        h.update(data)
+        h.update(b'\0')
+    return h.hexdigest()
 
 
 def _tokenize(text):
