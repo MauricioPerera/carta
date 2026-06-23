@@ -12,6 +12,9 @@ __all__ = [
     "CartaAgent",
     "stdio_mcp_executor",
     "http_mcp_executor",
+    "generate",
+    "load_spec",
+    "openapi_to_okf",
 ]
 
 
@@ -27,4 +30,10 @@ def __getattr__(name):
         from . import mcp_executor
 
         return getattr(mcp_executor, name)
+    if name in ("generate", "load_spec", "openapi_to_okf"):
+        from . import openapi_to_okf
+
+        if name == "openapi_to_okf":
+            return openapi_to_okf
+        return getattr(openapi_to_okf, name)
     raise AttributeError(f"module 'carta' has no attribute {name!r}")

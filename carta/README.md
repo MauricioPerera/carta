@@ -59,3 +59,26 @@ result = agent.run('Create a workflow that emails me when a webhook arrives')
 `http_mcp_executor(url, headers=...)` is available for remote servers exposing
 the streamable HTTP transport. Both return `{'ok': True, 'result': ...}` or
 `{'ok': False, 'error': str}` per call.
+
+## Generate a catalog from OpenAPI
+
+A provider can autogenerate its OKF catalog from an OpenAPI 3.0 spec instead
+of hand-writing each `.md`:
+
+```
+python carta/openapi_to_okf.py <spec.json|yaml> <out_dir>
+```
+
+This writes one `route: rest` tool doc per operation under `<out_dir>/tools/`
+plus an `<out_dir>/index.md`, in the same frontmatter style as the hand-made
+catalogs. Programmatically:
+
+```python
+from carta import generate, load_spec
+
+spec = load_spec("path/to/openapi.yaml")
+result = generate(spec, "okf/myprovider")
+# result = {'tools': [...], 'index': '...', 'out_dir': 'okf/myprovider'}
+```
+
+The output is directly consumable by `tool_selector` and `CartaClient`.
