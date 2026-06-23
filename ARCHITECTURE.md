@@ -111,6 +111,12 @@ so any party can later prove which exact version of the knowledge and contract
 an agent used. Messages live in git — the transport survives the producer going
 offline, and the history is immutable and reproducible.
 
+The snapshot SHA comes in two grains: `postal.compute_dir_sha` hashes a whole
+catalog (full audit, but hydrates every blob), while `carta.selector.selection_sha`
+hashes only the docs a task selected — letting an edge consumer version exactly the
+context it used over a sparse partial clone without pulling the rest (~84% fewer
+bytes on the n8n catalog; see [benchmarks/](benchmarks/)).
+
 ## Where MCP is still the right tool
 
 Carta covers discovery, selection, execution, governance and audit without a

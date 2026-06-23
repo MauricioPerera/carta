@@ -100,8 +100,23 @@ git sparse-checkout set okf/stripe
 
 Latency is **moved, not removed**: a blobless clone does a round-trip the first
 time each blob is read, so the win comes from reading a *subset* (sparse), not the
-whole catalog. Note `compute_dir_sha` over a whole directory forces every blob to
-hydrate — for selective discovery, hash only the docs you select.
+whole catalog.
+
+To version the context an agent actually used **without** hydrating the whole
+catalog, hash only the selected docs with `carta.selector.selection_sha` instead
+of a whole-directory hash:
+
+```python
+from carta.selector import select_tools, selection_sha
+
+docs = select_tools(task, okf_path="okf/example")
+print(selection_sha(docs))   # reads only the selected docs, not the catalog
+```
+
+On the bundled n8n catalog this reads 5 of 31 files — **~84% fewer bytes** than
+hashing the directory. See [benchmarks/](benchmarks/) (`python benchmarks/bench_sha.py`).
+A whole-directory hash (`postal.compute_dir_sha`) forces every blob to hydrate, so
+reserve it for full-catalog audit, not per-task versioning.
 
 If you just want the current state with no git protocol at all, a release tarball
 of the catalog (one GET) is the fastest option.

@@ -105,6 +105,7 @@ Carta is not on PyPI yet — install from a clone with `pip install -e .`.
 | `postal/`        | ECDSA-signed, ECDH-encrypted messages over git.               |
 | `.ccdd/`         | Per-agent governance contracts (permissions, budgets, allowlist). |
 | `examples/`      | Worked examples, one per route (REST and MCP).                 |
+| `benchmarks/`    | Reproducible measurements (e.g. selective vs full-catalog hashing). |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design.
 

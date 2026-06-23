@@ -22,6 +22,22 @@ print(client.execute({"route": "rest", "command": "curl -s https://api.example.c
 print(client.execute({"route": "mcp", "tool": "search_nodes", "args": {"queries": ["gmail"]}}))
 ```
 
+### Versioning only what you used
+
+`selection_sha` hashes just the selected docs — not the whole catalog — so you can
+record which context an agent acted on without hydrating every blob (useful with a
+sparse partial clone). `doc_sha` hashes a single file.
+
+```python
+from carta.selector import select_tools, selection_sha, doc_sha
+
+docs = select_tools("create workflow webhook", okf_path="okf/n8n")
+print(selection_sha(docs))        # deterministic over only those docs
+```
+
+On the n8n catalog this reads 5 of 31 files (~84% fewer bytes) than a full-directory
+hash. Run `python benchmarks/bench_sha.py` to reproduce.
+
 ## CartaAgent — full loop against an OpenAI-compatible endpoint
 
 ```python
