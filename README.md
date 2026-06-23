@@ -1,5 +1,9 @@
 # Carta
 
+[![CI](https://github.com/MauricioPerera/carta/actions/workflows/ci.yml/badge.svg)](https://github.com/MauricioPerera/carta/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+
 **Expose an API to AI agents by publishing a git repo — not by running a server.**
 
 Carta is a serverless pattern for giving agents *discovery*, *governance*, and
