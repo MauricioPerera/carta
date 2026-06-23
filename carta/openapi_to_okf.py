@@ -6,7 +6,7 @@ Reads an OpenAPI 3.0 spec (JSON or YAML) and emits an OKF catalog of
 The output frontmatter is serialized in the same style as the hand-written
 catalogs under ``okf/`` (single-quoted strings, inline ``[a, b]`` lists) so
 the generated docs are indistinguishable from manual ones and consumable
-directly by :mod:`agents.tool_selector`.
+directly by :mod:`carta.selector`.
 
 CLI::
 

@@ -1,8 +1,8 @@
 """CartaClient — discovery + selection + execution, with no model of its own.
 
-The client wraps the existing ``agents.tool_selector`` and ``bash`` modules so
-the OKF pattern (select a small context, then run the action along its route)
-can be reused without re-assembling the wiring each time.
+The client wraps the :mod:`carta.selector` and :mod:`carta.bash` modules so the
+OKF pattern (select a small context, then run the action along its route) can be
+reused without re-assembling the wiring each time.
 
 It intentionally contains NO language-model logic: that lives in
 ``carta.agent.CartaAgent``. The client is safe to use on its own for scripted
@@ -11,16 +11,13 @@ or deterministic flows.
 from __future__ import annotations
 
 import os
-import sys
 
-# Make the repo root importable so ``agents.tool_selector`` and ``bash`` resolve
-# regardless of the caller's cwd. ``carta/`` sits at the repo root, so its
-# parent directory IS the repo root.
+# Repo root, used to resolve relative catalog paths (e.g. ``okf/n8n``) when the
+# caller's cwd does not contain them. Editable installs point ``__file__`` at
+# the source tree, so this still resolves to the repo root.
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
 
-from agents.tool_selector import (  # noqa: E402  (import after sys.path tweak)
+from carta.selector import (  # noqa: E402
     count_tokens,
     format_context,
     load_okf_index,
@@ -70,7 +67,7 @@ class CartaClient:
         """Build the Bash executor + allowlist. Fails soft: if the bash module
         is unavailable we keep going and report a clear error at execute time."""
         try:
-            from bash import Allowlist, Bash  # noqa: WPS433  (lazy by design)
+            from carta.bash import Allowlist, Bash  # noqa: WPS433  (lazy by design)
         except Exception as exc:  # pragma: no cover - environment-dependent
             self._bash_error = f"bash executor unavailable: {exc!r}"
             return

@@ -10,6 +10,13 @@ from .agent import CartaAgent
 __all__ = [
     "CartaClient",
     "CartaAgent",
+    "select_tools",
+    "load_okf_index",
+    "format_context",
+    "Bash",
+    "Allowlist",
+    "AuditLog",
+    "SharedFilesystem",
     "stdio_mcp_executor",
     "http_mcp_executor",
     "generate",
@@ -22,9 +29,9 @@ def __getattr__(name):
     """Lazy, optional-dependency-safe exports.
 
     The reference MCP executors live in :mod:`carta.mcp_executor` and only need
-    the ``mcp`` package when actually called. We expose them here without
-    importing them eagerly so ``import carta`` still works when ``mcp`` is not
-    installed.
+    the ``mcp`` package when actually called. The selector and bash symbols are
+    also exposed lazily so ``import carta`` stays light. Everything here is
+    imported on first attribute access rather than eagerly.
     """
     if name in ("stdio_mcp_executor", "http_mcp_executor"):
         from . import mcp_executor
@@ -36,4 +43,12 @@ def __getattr__(name):
         if name == "openapi_to_okf":
             return openapi_to_okf
         return getattr(openapi_to_okf, name)
+    if name in ("select_tools", "load_okf_index", "format_context"):
+        from . import selector
+
+        return getattr(selector, name)
+    if name in ("Bash", "Allowlist", "AuditLog", "SharedFilesystem"):
+        from . import bash
+
+        return getattr(bash, name)
     raise AttributeError(f"module 'carta' has no attribute {name!r}")

@@ -167,7 +167,7 @@ def _all_docs_count(okf_path='okf/n8n'):
 def _parse_provider(argv):
     """Extract --provider <name> from argv. Returns (query, okf_path).
 
-    Usage: python agents/tool_selector.py "<query>" [--provider <name>]
+    Usage: python -m carta.selector "<query>" [--provider <name>]
     --provider jsonplaceholder → okf/jsonplaceholder
     default (no flag) → okf/n8n
     """
@@ -196,7 +196,7 @@ def _parse_provider(argv):
 def main():
     query, okf_path, provider = _parse_provider(sys.argv)
     if not query:
-        print('usage: python agents/tool_selector.py "<query>" [--provider <name>]')
+        print('usage: python -m carta.selector "<query>" [--provider <name>]')
         sys.exit(1)
     selected = select_tools(query, okf_path=okf_path)
     context = format_context(selected)

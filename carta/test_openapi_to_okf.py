@@ -4,19 +4,12 @@ No network. Builds a minimal OpenAPI 3.0 spec inline and checks the generated
 docs are valid and consumable by the existing tool_selector.
 """
 import os
-import sys
 
 import pytest
 import yaml
 
-# Make the repo root importable so ``carta`` and ``agents`` resolve regardless
-# of how pytest is invoked.
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
-
 from carta.openapi_to_okf import generate, load_spec  # noqa: E402
-from agents.tool_selector import load_okf_index, select_tools  # noqa: E402
+from carta.selector import load_okf_index, select_tools  # noqa: E402
 
 
 def _spec() -> dict:

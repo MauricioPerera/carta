@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from bash import Allowlist, AuditLog, Bash, SharedFilesystem
+from carta.bash import Allowlist, AuditLog, Bash, SharedFilesystem
 
 
 @pytest.fixture

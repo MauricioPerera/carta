@@ -9,10 +9,10 @@ import pytest
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _AGENTS = os.path.join(_REPO_ROOT, "agents")
-if _AGENTS not in sys.path:
-    sys.path.insert(0, _AGENTS)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
-from tool_selector import select_tools, _parse_frontmatter  # noqa: E402
+from carta.selector import select_tools, _parse_frontmatter  # noqa: E402
 
 JP_OKF = os.path.join(_REPO_ROOT, "okf", "jsonplaceholder")
 

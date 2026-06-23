@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "carta"
+version = "0.1.0"
+description = "OKF capability-discovery client + agent: select relevant docs and execute actions along their declared route (rest or mcp)."
+requires-python = ">=3.10"
+dependencies = ["PyYAML>=6.0"]
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.0"]
+audit = ["cryptography>=42.0"]
+
+[tool.setuptools]
+packages = ["carta", "carta.bash"]

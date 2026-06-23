@@ -25,16 +25,14 @@ try:
 except (AttributeError, ValueError):
     pass
 
-# Make repo root importable when run as a script.
+# Make repo root importable when run as a script so ``carta`` and ``postal``
+# resolve regardless of the caller's cwd.
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
-# Make `agents/` importable for tool_selector.
-if os.path.join(_REPO_ROOT, "agents") not in sys.path:
-    sys.path.insert(0, os.path.join(_REPO_ROOT, "agents"))
 
-from tool_selector import select_tools, load_okf_index  # noqa: E402
-from bash import Bash, Allowlist, AuditLog, SharedFilesystem  # noqa: E402
+from carta.selector import select_tools, load_okf_index  # noqa: E402
+from carta.bash import Bash, Allowlist, AuditLog, SharedFilesystem  # noqa: E402
 from postal import compute_dir_sha  # noqa: E402
 
 PROVIDER = "jsonplaceholder"
