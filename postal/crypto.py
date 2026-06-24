@@ -54,7 +54,10 @@ def verify(public_key: str, message_bytes: bytes, signature_hex: str) -> bool:
         pub = _load_public(public_key)
         pub.verify(bytes.fromhex(signature_hex), message_bytes, ec.ECDSA(hashes.SHA256()))
         return True
-    except (InvalidSignature, InvalidKey, ValueError, Exception):
+    except (InvalidSignature, InvalidKey, ValueError, TypeError):
+        # Genuine verification failures: bad signature, malformed key, non-hex
+        # signature. Anything else (a bug in this module) propagates rather than
+        # being silently masked as "invalid signature".
         return False
 
 

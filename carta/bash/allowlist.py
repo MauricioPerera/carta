@@ -3,9 +3,50 @@ from __future__ import annotations
 
 import os
 import re
+import shlex
 from pathlib import Path
 
 import yaml
+
+# Operators that begin a new command in a shell line. The allowlist must check
+# the command AFTER each of these, not just the first token — otherwise
+# ``echo ok ; touch evil`` runs ``touch`` even when only ``echo`` is allowed.
+_SEPARATORS = {";", "&", "&&", "||", "|", "|&", "(", ")"}
+# Redirection operators. A command allowlist governs which binaries run, not
+# file writes; ``curl ... > /etc/passwd`` clobbers a file without running a new
+# command, so redirection is refused outright.
+_REDIRECTS = {">", ">>", "<", "<<", ">|", "&>", "&>>", "2>", "2>>", "<<<"}
+
+
+def _command_heads(command: str) -> "list[str] | None":
+    """Return the leading word of every command in a shell line.
+
+    Splits on control operators (``;`` ``&&`` ``||`` ``|`` ``&`` ``(`` ``)`` and
+    newlines) with quote awareness via :mod:`shlex`, so chained commands are all
+    surfaced. Returns ``None`` if the line cannot be parsed (unbalanced quotes)
+    or if a redirection operator is present — both fail closed at the call site.
+    """
+    heads: list[str] = []
+    for line in command.split("\n"):
+        if not line.strip():
+            continue
+        try:
+            lex = shlex.shlex(line, posix=True, punctuation_chars=True)
+            lex.whitespace_split = True
+            tokens = list(lex)
+        except ValueError:
+            return None
+        expect_head = True
+        for tok in tokens:
+            if tok in _REDIRECTS:
+                return None  # redirection not sanctioned by a command allowlist
+            if tok in _SEPARATORS:
+                expect_head = True
+                continue
+            if expect_head:
+                heads.append(tok)
+                expect_head = False
+    return heads
 
 
 class Allowlist:
@@ -41,19 +82,26 @@ class Allowlist:
         )
 
     def check_command(self, command: str) -> tuple[bool, str]:
-        """True if the first token is in allowed_commands.
+        """True only if EVERY command in the line is in allowed_commands.
 
-        allowed_commands None => everything permitted.
+        Validates each command in a chain/pipe/multi-line script — not just the
+        first token — and refuses shell redirection. ``allowed_commands`` None
+        => everything permitted; an empty list => everything refused.
         """
         if self.allowed_commands is None:
             return True, "allowlist disabled: everything permitted"
-        tokens = command.strip().split()
-        if not tokens:
+        heads = _command_heads(command)
+        if heads is None:
+            return False, (
+                "command refused: unparseable or contains shell redirection"
+            )
+        if not heads:
             return False, "empty command"
-        first = os.path.basename(tokens[0].strip("'\""))
-        if first in self.allowed_commands:
-            return True, f"command '{first}' permitted"
-        return False, f"command '{first}' is NOT in the allowlist"
+        for head in heads:
+            name = os.path.basename(head.strip("'\""))
+            if name not in self.allowed_commands:
+                return False, f"command '{name}' is NOT in the allowlist"
+        return True, f"all {len(heads)} command(s) permitted"
 
     def check_url(self, url: str) -> tuple[bool, str]:
         """True if the URL starts with some prefix in allowed_urls.

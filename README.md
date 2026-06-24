@@ -12,9 +12,10 @@ agent selects only what a task needs, and execution happens over plain HTTP
 (`curl`) or an existing MCP server. No always-on process to expose your API.
 
 > Status: experimental. Core (discovery/selection/execution) plus an agent
-> dev-team pipeline that turns a spec into verified code (`carta flow`), with 254
-> passing tests. Driven end-to-end by Claude, Perplexity, and Antigravity as
-> orchestrators over Ollama Cloud models. The spec is v0 and will change.
+> dev-team pipeline that turns a spec into verified code (`carta flow`), under a
+> CI-gated test suite. The runtime is LLM-agnostic (any OpenAI-compatible
+> endpoint); during development it was driven by several orchestrators (Claude,
+> Perplexity, Antigravity) over Ollama Cloud models. The spec is v0 and will change.
 
 ---
 
@@ -34,7 +35,7 @@ Carta decouples them:
 | Concern    | Carta                         | Needs a server? |
 | ---------- | ----------------------------- | --------------- |
 | Discovery  | markdown docs in a git repo   | No              |
-| Selection  | local scorer, ~80% fewer tokens | No            |
+| Selection  | local scorer, far fewer tokens on large catalogs | No   |
 | Execution  | `curl` (REST) or MCP          | Only to run it  |
 | Governance | CCDD contracts + allowlist    | No              |
 | Audit      | signed messages over git      | No              |
@@ -46,7 +47,7 @@ execution call touches the network.
 
 ```
 1. tool_selector("create a workflow from a webhook")
-   → reads okf/n8n/*.md, returns the 5 relevant docs (1496 tok, 19% of baseline)
+   → reads okf/n8n/*.md, returns ~5 relevant docs (~1.5k tok, ~1/5 of the full catalog)
 
 2. agent reads those docs → decides which tools to call
 
@@ -99,9 +100,10 @@ implement  → one atomic, gated implementation per unit (foreach)
 integrate  → assemble the package; gate on the FULL suite
 ```
 
-This is **LLM-agnostic** (any OpenAI-compatible endpoint) and has been driven by
-Claude, Perplexity, and Antigravity as the orchestrator while small models
-(`glm-5.2` + `kimi-k2.7-code`) do the coding. See **[FLOW.md](FLOW.md)** for the
+This is **LLM-agnostic** (any OpenAI-compatible endpoint). During development the
+orchestrator role was filled by several different agents (Claude, Perplexity,
+Antigravity) while small models (`glm-5.2` + `kimi-k2.7-code`) did the coding.
+See **[FLOW.md](FLOW.md)** for the
 full pipeline, every stage field, and the two oracle-attestation modes
 (automated reviewer vs. human R6 sign-off).
 
@@ -116,13 +118,14 @@ pip install -e .                 # core; add ".[mcp,audit]" for the MCP route + 
 
 # Select context for a task (offline, no server)
 python -m carta.selector "create a workflow from a webhook" --provider n8n
-#  → selected 5/30 docs · 1496 tokens · 18.9% of the 7902-token baseline
+#  → ~5/30 docs · ~1.5k tokens · ~1/5 of the full-catalog baseline
+#    (savings scale with catalog size; a tiny catalog may select everything)
 
 # Run an agent end-to-end against a real REST API, no MCP server involved
 python agents/agent_rest.py
 #  → TASK COMPLETE - route: rest - no MCP server required
 
-pytest    # 254 passing
+pytest    # full suite, CI-gated on 3.10/3.11/3.12
 ```
 
 Carta is not on PyPI yet — install from a clone with `pip install -e .`.

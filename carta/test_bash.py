@@ -91,6 +91,46 @@ def test_allowlist_permit(workdir):
     assert res["blocked"] is False
 
 
+# ---------- chaining bypass (every command in the line is checked) ----------
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "echo hola ; touch /tmp/carta_bypass.txt",   # ; separator
+        "echo hola && touch /tmp/carta_bypass.txt",  # && separator
+        "echo hola || touch /tmp/carta_bypass.txt",  # || separator
+        "echo hola | tee /tmp/carta_bypass.txt",     # pipe to disallowed cmd
+        "echo hola\ntouch /tmp/carta_bypass.txt",    # newline-separated
+    ],
+)
+def test_allowlist_blocks_chained_disallowed_command(workdir, command):
+    """A disallowed command anywhere in the chain is blocked, not just token 0."""
+    al = Allowlist(allowed_commands=["echo"])
+    b = Bash(workdir=workdir, allowlist=al)
+    res = b.exec(command)
+    assert res["blocked"] is True, f"chaining bypass not blocked: {command!r}"
+    assert res["exit_code"] == 1
+
+
+def test_allowlist_blocks_redirection(workdir):
+    """Shell redirection (file clobbering) is refused even for an allowed cmd."""
+    al = Allowlist(allowed_commands=["echo"])
+    b = Bash(workdir=workdir, allowlist=al)
+    res = b.exec("echo pwned > /tmp/carta_bypass.txt")
+    assert res["blocked"] is True
+    assert res["exit_code"] == 1
+
+
+def test_allowlist_permits_legit_chain_of_allowed(workdir):
+    """A chain where EVERY command is allowed still passes."""
+    al = Allowlist(allowed_commands=["echo"])
+    b = Bash(workdir=workdir, allowlist=al)
+    res = b.exec("echo a && echo b")
+    assert res["blocked"] is False
+    assert res["exit_code"] == 0
+
+
 # ---------- audit ----------
 
 

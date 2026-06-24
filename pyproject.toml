@@ -19,7 +19,7 @@ all = ["cryptography>=42.0", "mcp>=1.0"]
 carta = "carta.__main__:main"
 
 [project.urls]
-Repository = "https://github.com/okf/carta"
+Repository = "https://github.com/MauricioPerera/carta"
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -74,7 +74,8 @@ only the relevant subset.
 
 ```
 $ python -m carta.selector "create a workflow from a webhook" --provider n8n
-selected 5/30 docs · 1496 tokens · 18.9% of the 7902-token baseline
+selected ~5/30 docs · ~1.5k tokens · ~1/5 of the full-catalog baseline
+# exact figures depend on the catalog; savings scale with its size
 ```
 
 This is RAG for tool documentation, but the index is plain files in git —
@@ -174,8 +175,8 @@ Layered verification, deterministic-first (zero LLM tokens) then probabilistic:
 
 The runtime is LLM-agnostic (any OpenAI-compatible endpoint over `urllib`, with
 streaming, network retries, and native `tool_calls` support) and orchestrator-
-agnostic (validated end-to-end driven by Claude, Perplexity, and Antigravity).
-Full reference: [FLOW.md](FLOW.md).
+agnostic (during development the orchestrator role was filled by Claude,
+Perplexity, and Antigravity). Full reference: [FLOW.md](FLOW.md).
 
 ## Where MCP is still the right tool
 
