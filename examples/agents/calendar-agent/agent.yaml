@@ -1,0 +1,4 @@
+id: calendar-agent
+model:
+  base_url: http://localhost:1234/v1
+  name: glm-5.2:cloud

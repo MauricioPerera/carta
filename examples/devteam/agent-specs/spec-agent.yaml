@@ -1,0 +1,15 @@
+id: spec-agent
+model:
+  base_url: http://localhost:1234/v1
+  name: claude-sonnet-4-6
+  timeout: 60
+  max_steps: 8
+knowledge:
+  - .okf/
+governance:
+  contract: .ccdd/spec.yaml
+postal:
+  audit_dir: .postal/audit/
+  mailbox: .postal/inbox/spec-agent/
+triggers:
+  - type: mailbox

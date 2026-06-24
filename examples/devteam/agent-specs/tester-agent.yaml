@@ -1,0 +1,15 @@
+id: tester-agent
+model:
+  base_url: http://localhost:1234/v1
+  name: glm-5.2:cloud
+  timeout: 60
+  max_steps: 8
+knowledge:
+  - .okf/
+governance:
+  contract: .ccdd/tester.yaml
+postal:
+  audit_dir: .postal/audit/
+  mailbox: .postal/inbox/tester-agent/
+triggers:
+  - type: mailbox

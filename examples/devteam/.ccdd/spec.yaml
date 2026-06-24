@@ -1,0 +1,11 @@
+agent: spec-agent
+project: devteam-example
+can:
+  - read_requirements
+  - write_tasks
+  - send_to_agent
+cannot:
+  - write_code
+  - run_tests
+  - push_to_main
+  - approve_pr

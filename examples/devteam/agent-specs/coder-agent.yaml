@@ -1,0 +1,15 @@
+id: coder-agent
+model:
+  base_url: http://localhost:1234/v1
+  name: qwen2.5-coder:7b
+  timeout: 60
+  max_steps: 8
+knowledge:
+  - .okf/
+governance:
+  contract: .ccdd/coder.yaml
+postal:
+  audit_dir: .postal/audit/
+  mailbox: .postal/inbox/coder-agent/
+triggers:
+  - type: mailbox

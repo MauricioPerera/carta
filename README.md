@@ -11,8 +11,10 @@ Carta is a serverless pattern for giving agents *discovery*, *governance*, and
 agent selects only what a task needs, and execution happens over plain HTTP
 (`curl`) or an existing MCP server. No always-on process to expose your API.
 
-> Status: experimental. The core works end-to-end with 34 passing tests and two
-> live demos (n8n and a public REST API), but the spec is v0 and will change.
+> Status: experimental. Core (discovery/selection/execution) plus an agent
+> dev-team pipeline that turns a spec into verified code (`carta flow`), with 254
+> passing tests. Driven end-to-end by Claude, Perplexity, and Antigravity as
+> orchestrators over Ollama Cloud models. The spec is v0 and will change.
 
 ---
 
@@ -71,6 +73,38 @@ tags: [example, rest, write]
 curl -X POST https://jsonplaceholder.typicode.com/posts -d '{"title":"hi","userId":1}'
 ```
 
+## Building software with an agent team
+
+Carta can also scaffold a **governed agent dev-team** and run a **verified
+implementation pipeline**: give it a spec, get back code a small model wrote and a
+deterministic gate proved correct.
+
+```bash
+carta config set api_key sk-your-key      # once per machine
+carta config set preset ollama-cloud
+carta init . --name my-project            # team + CCDD flow, in a dir with a spec
+carta flow flows/example.flow.yaml --input SPEC.md
+python -m pytest tests/frozen/ -q         # verify it yourself
+```
+
+The generated flow is the CCDD discipline made runnable — decompose the spec into
+atomic units, freeze a property-test oracle per unit, and let a small model
+iterate against a deterministic gate one piece at a time:
+
+```
+decompose  → strong model writes one frozen property-test file per unit
+             (gate: tests parse · attest: independent spec review · freeze)
+implement  → one atomic, gated implementation per unit (foreach)
+             (per-unit pytest gate · complexity budget · escalation if it fails)
+integrate  → assemble the package; gate on the FULL suite
+```
+
+This is **LLM-agnostic** (any OpenAI-compatible endpoint) and has been driven by
+Claude, Perplexity, and Antigravity as the orchestrator while small models
+(`glm-5.2` + `kimi-k2.7-code`) do the coding. See **[FLOW.md](FLOW.md)** for the
+full pipeline, every stage field, and the two oracle-attestation modes
+(automated reviewer vs. human R6 sign-off).
+
 ## Quickstart
 
 Requirements: Python 3.10+ and `bash` on PATH (Git Bash or WSL on Windows).
@@ -88,7 +122,7 @@ python -m carta.selector "create a workflow from a webhook" --provider n8n
 python agents/agent_rest.py
 #  → TASK COMPLETE - route: rest - no MCP server required
 
-pytest    # 49 passing
+pytest    # 254 passing
 ```
 
 Carta is not on PyPI yet — install from a clone with `pip install -e .`.
@@ -100,12 +134,28 @@ Carta is not on PyPI yet — install from a clone with `pip install -e .`.
 | `carta/`         | Reusable client: `CartaClient` (select + execute) and `CartaAgent` (full loop). |
 | `okf/`           | Capability catalogs (markdown + YAML). Two providers included. |
 | `carta/selector.py` | Task text → minimal relevant docs.                         |
+| `carta/init.py`  | `carta init` — scaffold a governed agent dev-team + CCDD flow. |
+| `carta/flow.py`  | `carta flow` — declarative pipeline: decompose → implement (foreach) → integrate, with gates, budget, escalation, freeze, attestation. |
+| `carta/complexity.py` | Deterministic AST complexity budget (cyclomatic / nesting / params / lines). |
+| `carta/config.py` | Global config at `~/.carta/config.yaml` (api_key / preset / base_url). |
 | `carta/bash/`    | Sandboxed executor — a Python port of [just-bash](https://github.com/vercel-labs/just-bash), with allowlist + audit. |
 | `carta/openapi_to_okf.py` | Generate a catalog from an OpenAPI spec.              |
 | `postal/`        | ECDSA-signed, ECDH-encrypted messages over git.               |
 | `.ccdd/`         | Per-agent governance contracts (permissions, budgets, allowlist). |
 | `examples/`      | Worked examples, one per route (REST and MCP).                 |
 | `benchmarks/`    | Reproducible measurements (e.g. selective vs full-catalog hashing). |
+
+### CLI commands
+
+| Command | Purpose |
+| ------- | ------- |
+| `carta init <dir>` | Scaffold an agent dev-team (`--preset`, `--api-key`, `--name`). |
+| `carta flow <flow.yaml> --input <spec>` | Run the verified-implementation pipeline. |
+| `carta run <agent.yaml> [--task …]` | Run one agent, or process its mailbox. |
+| `carta route <catalog> --task …` | Pick the best agent for a task and run it. |
+| `carta watch [dir]` | Poll inboxes and auto-run agents on new messages. |
+| `carta config set\|get\|list\|unset` | Manage the global `~/.carta/config.yaml`. |
+| `carta install-skill` | Install the `/carta-setup` Claude Code skill. |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design.
 

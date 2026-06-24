@@ -22,6 +22,10 @@ carta/                       # Installable package
 ├── selector.py        # Selection: task text -> minimal relevant docs
 ├── client.py          # CartaClient: select + route + execute
 ├── agent.py           # CartaAgent: full loop against an OpenAI-compatible model
+├── init.py            # carta init: scaffold a governed agent dev-team
+├── flow.py            # carta flow: decompose -> implement -> integrate pipeline
+├── complexity.py      # Deterministic AST complexity budget
+├── config.py          # Global config (~/.carta/config.yaml)
 ├── openapi_to_okf.py  # Generate a catalog from an OpenAPI spec
 ├── mcp_executor.py    # Bridge for route: mcp (optional `mcp` dependency)
 └── bash/              # Execution: sandboxed shell (Python port of just-bash)
@@ -137,6 +141,41 @@ is unchanged. Honest limits:
 - It requires `source_spec` to be fetchable. Catalogs without provenance
   (hand-written ones like `okf/n8n`) return `unknown`.
 - It costs one network call per check. Inject a `fetcher` to stay offline.
+
+## Orchestration — carta flow
+
+On top of discovery/execution, Carta scaffolds a governed agent dev-team
+(`carta init`) and runs a verified-implementation pipeline (`carta flow`) that
+turns a spec into code a small model wrote and a deterministic gate proved.
+
+The pipeline is the CCDD discipline made runnable: never implement a whole
+package in one shot. Decompose into atomic units, freeze a property-test oracle
+per unit, and iterate each unit against a deterministic gate.
+
+```
+decompose  spec -> one frozen property-test file per atomic unit
+           gate: tests parse  ·  attest: independent spec review  ·  freeze (lock)
+implement  foreach frozen test -> implement its module(s)
+           per-unit pytest gate  ·  complexity budget  ·  retries  ·  escalation
+integrate  assemble package exports -> gate on the FULL suite
+```
+
+Layered verification, deterministic-first (zero LLM tokens) then probabilistic:
+
+- **Shell gate** (`gate:`) — exit 0 to pass; retried, failure fed into the prompt.
+- **Complexity budget** (`budget:`) — pure-AST limits; over-budget forces a refactor.
+- **Freeze + verify_frozen** — once an oracle passes, lock it (sha256); the
+  implementer cannot weaken it. A failed gate is never frozen (stays winnable).
+- **Escalation** (`gate_escalate_model`) — spend a stronger model only when the
+  deterministic gate proves the cheap one could not pass.
+- **Attestation** (`attest:`) — a deterministic gate proves tests *run*; it cannot
+  prove they are *right*. An independent reviewer (or a human, CCDD R6) checks the
+  oracle for fidelity and coverage against the spec before freezing.
+
+The runtime is LLM-agnostic (any OpenAI-compatible endpoint over `urllib`, with
+streaming, network retries, and native `tool_calls` support) and orchestrator-
+agnostic (validated end-to-end driven by Claude, Perplexity, and Antigravity).
+Full reference: [FLOW.md](FLOW.md).
 
 ## Where MCP is still the right tool
 

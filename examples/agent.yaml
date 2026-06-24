@@ -1,0 +1,31 @@
+# agent.yaml — declarative agent definition for `python -m carta run`.
+#
+# Run with:
+#   python -m carta run examples/agent.yaml --task "list n8n gmail nodes"
+#
+# All paths are relative to the repo root (the cwd you run `carta` from).
+
+id: n8n-assistant
+
+model:
+  base_url: http://localhost:1234/v1
+  name: glm-5.2:cloud
+  timeout: 60
+  max_steps: 8
+
+# OKF capability catalogs this agent can select from.
+knowledge:
+  - okf/n8n/
+
+triggers:
+  - type: manual
+
+# Optional CCDD governance contract (gate). Uncomment to enforce a contract.
+# governance:
+#   contract: .ccdd/agent-a.yaml
+
+# Optional Postal audit signing. Uncomment and point at a real identity file
+# to emit signed run receipts under audit_dir.
+# postal:
+#   identity: .postal/users/me.json
+#   audit_dir: .postal/audit

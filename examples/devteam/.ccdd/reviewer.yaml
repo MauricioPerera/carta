@@ -1,0 +1,11 @@
+agent: reviewer-agent
+project: devteam-example
+can:
+  - read_all
+  - approve
+  - reject
+  - comment
+cannot:
+  - write_code
+  - write_tests
+  - push_to_main

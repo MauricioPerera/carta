@@ -151,14 +151,15 @@ class CartaClient:
 
     # --------------------------------------------------------------- routes
     def route_of(self, doc: dict) -> str:
-        """Return ``'rest'`` or ``'mcp'`` from a doc's frontmatter.
+        """Return the route declared in a doc's frontmatter.
 
-        Defaults to ``'mcp'`` when the doc declares no route (e.g. n8n skill
+        Recognised values: ``'rest'``, ``'mcp'``, ``'local'``, ``'internal'``.
+        Defaults to ``'mcp'`` for docs that declare no route (e.g. n8n skill
         docs, which inherit the MCP route of their provider).
         """
         fm = doc.get("frontmatter", {}) or {}
         route = fm.get("route")
-        if route in ("rest", "mcp"):
+        if route in ("rest", "mcp", "local", "internal"):
             return route
         return "mcp"
 

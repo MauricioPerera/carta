@@ -1,0 +1,12 @@
+agent: coder-agent
+project: devteam-example
+can:
+  - write_code
+  - read_spec
+  - run_linter
+  - send_to_agent
+cannot:
+  - write_tests
+  - push_to_main
+  - approve_pr
+  - modify_spec

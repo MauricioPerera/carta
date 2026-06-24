@@ -5,13 +5,22 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "carta"
 version = "0.1.0"
-description = "OKF capability-discovery client + agent: select relevant docs and execute actions along their declared route (rest or mcp)."
+description = "Agent coordination protocol: OKF capability discovery, CCDD governance, Postal async messaging."
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["PyYAML>=6.0"]
 
 [project.optional-dependencies]
+postal = ["cryptography>=42.0"]
 mcp = ["mcp>=1.0"]
-audit = ["cryptography>=42.0"]
+all = ["cryptography>=42.0", "mcp>=1.0"]
 
-[tool.setuptools]
-packages = ["carta", "carta.bash"]
+[project.scripts]
+carta = "carta.__main__:main"
+
+[project.urls]
+Repository = "https://github.com/okf/carta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["carta*"]

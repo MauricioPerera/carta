@@ -1,0 +1,15 @@
+id: fix-and-test
+name: Bug Fix Workflow
+stages:
+  - id: analyze
+    agent: spec-agent
+    task: "Lee este archivo e identifica posibles bugs o mejoras: {input}"
+    output_key: fixes
+  - id: implement
+    agent: coder-agent
+    task: "Implementa las siguientes correcciones:\n{fixes}"
+    output_key: code
+  - id: verify
+    agent: tester-agent
+    task: "Escribe tests para verificar esta implementacion:\n{code}"
+    output_key: test_results
