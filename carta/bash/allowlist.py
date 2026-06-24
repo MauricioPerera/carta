@@ -4,9 +4,25 @@ from __future__ import annotations
 import os
 import re
 import shlex
+import warnings
 from pathlib import Path
 
 import yaml
+
+# Allowing any of these is equivalent to allowing arbitrary code execution: they
+# are interpreters or launchers that run whatever their arguments say
+# (`python -c …`, `bash -c …`, `find -exec …`, `sudo …`). A command allowlist
+# governs WHICH binary runs, not what that binary does with its arguments, so
+# permitting one of these defeats the allowlist by design. We warn at config
+# time rather than block — sometimes it's intentional — but the operator should
+# know. (Many ordinary tools also have exec escape hatches, e.g.
+# `git -c core.pager=…`; this list catches the obvious launchers, not every one.)
+_INTERPRETERS = frozenset({
+    "python", "python2", "python3", "bash", "sh", "zsh", "ksh", "dash", "fish",
+    "perl", "ruby", "node", "nodejs", "deno", "php", "lua", "rscript",
+    "env", "xargs", "find", "sudo", "doas", "timeout", "nohup", "nice",
+    "setsid", "watch", "ssh", "make", "awk", "gawk", "eval", "exec",
+})
 
 # Operators that begin a new command in a shell line. The allowlist must check
 # the command AFTER each of these, not just the first token — otherwise
@@ -63,6 +79,26 @@ class Allowlist:
         )
         self.allowed_urls = list(allowed_urls) if allowed_urls is not None else []
         self.timeout = timeout
+
+        risky = self.interpreter_commands()
+        if risky:
+            warnings.warn(
+                "allowlist permits interpreter/launcher command(s) "
+                f"{sorted(risky)} — these run arbitrary code (e.g. "
+                "`python -c …`, `bash -c …`), so the command allowlist does not "
+                "constrain what they do. Allow only non-interpreter binaries for "
+                "the allowlist to be a meaningful boundary.",
+                stacklevel=2,
+            )
+
+    def interpreter_commands(self) -> set:
+        """Allowed commands that are interpreters/launchers (arbitrary exec)."""
+        if not self.allowed_commands:
+            return set()
+        return {
+            c for c in self.allowed_commands
+            if os.path.basename(c).lower() in _INTERPRETERS
+        }
 
     @classmethod
     def load_from_ccdd(cls, ccdd_path: str) -> "Allowlist":

@@ -101,12 +101,22 @@ allowlist enforces before any command runs:
 
 ```yaml
 execution:
-  allowed_commands: [curl, python, git]
+  allowed_commands: [curl, git, jq]
   allowed_urls: [https://api.example.com]
   timeout: 30
 ```
 
-A command outside the allowlist is refused and the refusal is recorded.
+The allowlist checks the head of **every** command in a line (across `;`, `&&`,
+`||`, `|`, `&`, and newlines), refuses shell redirection, and rejects any URL
+outside `allowed_urls`. A refused command is recorded with `blocked: true`.
+
+**Threat-model floor.** The allowlist governs *which binary* runs, not what that
+binary does with its arguments. Allowing an interpreter or launcher — `python`,
+`bash -c`, `sh -c`, `env`, `xargs`, `find -exec`, `sudo`, `timeout` — is
+equivalent to allowing arbitrary code (`python -c "import os; os.system(...)"`),
+and some ordinary tools have their own escapes (`git -c core.pager=… log`). For
+the allowlist to be a real boundary, permit only non-interpreter binaries;
+`Allowlist` emits a warning at config time if a known interpreter is allowed.
 
 ## Audit — Postal
 

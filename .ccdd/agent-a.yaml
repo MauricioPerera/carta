@@ -18,6 +18,8 @@ rules:
   - 'Debe incluir OKF SHA en cada mensaje'
   - 'Debe referenciar este contract SHA'
 execution:
-  allowed_commands: ['curl', 'python', 'git', 'echo', 'cat', 'ls']
+  # Non-interpreter binaries only: allowing python/bash/env/etc. is arbitrary
+  # code execution and defeats the allowlist (see ARCHITECTURE.md, Governance).
+  allowed_commands: ['curl', 'git', 'echo', 'cat', 'ls']
   allowed_urls: ['https://api.n8n.io', 'https://ardf.dev']
   timeout: 30

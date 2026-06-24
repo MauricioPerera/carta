@@ -131,6 +131,24 @@ def test_allowlist_permits_legit_chain_of_allowed(workdir):
     assert res["exit_code"] == 0
 
 
+def test_allowlist_warns_on_interpreter():
+    """Allowing an interpreter/launcher warns: it is arbitrary code execution.
+
+    The allowlist governs which binary runs, not what it does with its args, so
+    `python -c …` / `bash -c …` defeat it. We surface that at config time.
+    """
+    with pytest.warns(UserWarning, match="interpreter"):
+        al = Allowlist(allowed_commands=["curl", "python", "git"])
+    assert al.interpreter_commands() == {"python"}
+
+
+def test_allowlist_no_warning_for_plain_binaries(recwarn):
+    """A non-interpreter allowlist produces no warning."""
+    al = Allowlist(allowed_commands=["curl", "git", "echo", "cat", "ls"])
+    assert al.interpreter_commands() == set()
+    assert len(recwarn) == 0
+
+
 # ---------- audit ----------
 
 
