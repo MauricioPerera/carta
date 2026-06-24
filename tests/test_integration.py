@@ -197,9 +197,17 @@ def test_tampered_message_rejected():
         msg_path = os.path.join(msgs_dir, jsons[0])
 
         # 2. Tamper the payload (ciphertext) — breaks the POSTAL signature.
+        #    Flip the first byte to a DIFFERENT value deterministically: a fixed
+        #    "00" prefix is a no-op ~1/256 of the time (when the payload already
+        #    starts with 00), leaving the signature valid and the test passing
+        #    for the wrong reason — a silent hole in an integrity test.
         with open(msg_path, "r", encoding="utf-8") as f:
             msg = json.load(f)
-        msg["payload"] = "00" + msg["payload"][2:] if len(msg["payload"]) > 2 else "deadbeef"
+        p = msg["payload"]
+        if len(p) > 2:
+            msg["payload"] = ("ff" if p[:2].lower() != "ff" else "00") + p[2:]
+        else:
+            msg["payload"] = "deadbeef"
         with open(msg_path, "w", encoding="utf-8") as f:
             json.dump(msg, f, indent=2, sort_keys=True)
 

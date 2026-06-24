@@ -101,7 +101,7 @@ allowlist enforces before any command runs:
 
 ```yaml
 execution:
-  allowed_commands: [curl, git, jq]
+  allowed_commands: [curl, git, jq]   # illustrative only — see the caveat below
   allowed_urls: [https://api.example.com]
   timeout: 30
 ```
@@ -110,13 +110,22 @@ The allowlist checks the head of **every** command in a line (across `;`, `&&`,
 `||`, `|`, `&`, and newlines), refuses shell redirection, and rejects any URL
 outside `allowed_urls`. A refused command is recorded with `blocked: true`.
 
-**Threat-model floor.** The allowlist governs *which binary* runs, not what that
-binary does with its arguments. Allowing an interpreter or launcher — `python`,
-`bash -c`, `sh -c`, `env`, `xargs`, `find -exec`, `sudo`, `timeout` — is
-equivalent to allowing arbitrary code (`python -c "import os; os.system(...)"`),
-and some ordinary tools have their own escapes (`git -c core.pager=… log`). For
-the allowlist to be a real boundary, permit only non-interpreter binaries;
-`Allowlist` emits a warning at config time if a known interpreter is allowed.
+**Threat-model floor — `allowed` is not `safe`.** The allowlist governs *which
+binary* runs, not what that binary does with its arguments:
+
+- **Interpreters/launchers** — `python`, `bash -c`, `sh -c`, `env`, `xargs`,
+  `find -exec`, `sudo`, `timeout` — are arbitrary code (`python -c
+  "import os; os.system(...)"`). `Allowlist` **warns at config time** when one is
+  allowed.
+- **Ordinary tools with escape hatches** — even the example above is not safe:
+  `git -c core.pager='touch evil' log` execs, and `curl -o /path` writes files.
+  These do **not** trigger the warning — the warning is a tripwire for the
+  obvious launchers, not an exhaustive check. There is no finite "safe binary"
+  list (see [GTFOBins](https://gtfobins.github.io)); enumeration is a losing race.
+
+Treat the allowlist as one layer that narrows attack surface, not a sandbox.
+For untrusted input, run it inside an OS-level sandbox (container, seccomp, a
+restricted user) as well — the allowlist alone is not a security boundary.
 
 ## Audit — Postal
 
